@@ -103,12 +103,12 @@ describe("VoteSystem contract", () => {
     it("Should start vote", async () => {
       await hardhatVoteSystem.startVote(0);
 
-      const endVote = BigInt(await hardhatVoteSystem.initialVote());
+      const endingVote = BigInt(await hardhatVoteSystem.initialVote());
       const targetBlock = BigInt(await hardhatVoteSystem.targetBlock());
 
       expect(await hardhatVoteSystem.voteState()).to.equal(VOTE_RUNNING_STATE);
       expect(await hardhatVoteSystem.initialVote()).to.equal(await ethers.provider.getBlockNumber());
-      expect(await hardhatVoteSystem.endVote()).to.equal(endVote+targetBlock);
+      expect(await hardhatVoteSystem.endingVote()).to.equal(endingVote+targetBlock);
     });
 
     it("Shouldn't start vote, state of vote different to Start", async () => {
@@ -133,16 +133,35 @@ describe("VoteSystem contract", () => {
 
     describe("Emit vote", () => {
       beforeEach(async () => {
-
+        await hardhatVoteSystem.startVote(0);
       });
 
       it("Should emit vote", async () => {
-        expect(await hardhatVoteSystem.vote(proposalId.value)).to.equal(true);
-        expect(await hardhatVoteSystem.connect(addr1).vote(proposalId)).to.equal(true);
-        expect(await hardhatVoteSystem.numberOfVoters()).to.equal(2);
-        expect(await hardhatVoteSystem.votesPerProposal[0]).to.equal(2);
+        await hardhatVoteSystem.vote(proposalId.value);
+
+        expect(await hardhatVoteSystem.numberOfVoters()).to.equal(1);
+        expect(await hardhatVoteSystem.votesPerCandidatesOf(proposalId.value)).to.equal(1);
+        expect(await hardhatVoteSystem.votesOf(admin.address, proposalId.value)).to.equal(true);
       });
       
+      it("Shouldn't emit vote, vote duplicated", async () => {
+        await hardhatVoteSystem.vote(proposalId.value);
+
+        await expect(hardhatVoteSystem.vote(proposalId.value)).to.be.revertedWith("You already emit your vote");
+      });
+
+      it("Shouldn't emit vote, vote ended", async () => {
+        await hardhatVoteSystem.endVote();
+
+        await expect(hardhatVoteSystem.vote(proposalId.value)).to.be.revertedWith("Vote has ended");
+      });
+
+      it("Shouldn't emit vote, vote expired", async () => {
+        // implements when this goes live 
+        // https://github.com/nomiclabs/hardhat/issues/1112
+        expect(true).to.equal(true);
+      });
+
     });
   });
 });

@@ -10,7 +10,7 @@ contract VoteSystem {
     uint public numberOfCandidates;
     
     uint public initialVote;
-    uint public endVote;
+    uint public endingVote;
     uint public maxProposals;
     uint public targetBlock = 6646;
     
@@ -48,6 +48,7 @@ contract VoteSystem {
     event CancelVote();
     event PauseVote();
     event ResumeVote();
+    event EndVote();
     event StartVote(uint _nroOfVote);
     event CreateProposal(string _name, string _description, uint[] _candidate);
     event CreateCandidate(string _profession);
@@ -64,9 +65,14 @@ contract VoteSystem {
     }
     
     modifier voteEnded() {
-        require(endVote >= block.number || voteState == State.Ended, "Vote has ended.");
+        require(voteState != State.Ended, "Vote has ended");
         _;
     }
+
+    modifier voteExpired() {
+        require(endingVote < block.number, "Vote expired");
+        _;
+    } 
     
     function cancelVote() public onlyAdmin {
         voteState = State.Canceled;
@@ -82,12 +88,17 @@ contract VoteSystem {
         voteState = State.Running;
         emit ResumeVote();
     }
+
+    function endVote() public onlyAdmin {
+        voteState = State.Ended;
+        emit EndVote();
+    }
     
     function startVote(uint _nroOfVote) public onlyAdmin {
         require(voteState == State.Started, "Different state of vote");
         
         initialVote = block.number;
-        endVote = initialVote + targetBlock;
+        endingVote = initialVote + targetBlock;
         
         VoteP storage newVote = votes[_nroOfVote];
         
@@ -134,8 +145,7 @@ contract VoteSystem {
         emit CreateCandidate( _profession);
     }
     
-    function vote(uint _proposal) public voteEnded returns (bool) {
-        require(voteState == State.Started, "Different state of vote");
+    function vote(uint _proposal) external voteEnded {
         require(votes[numberOfVotes].voters[msg.sender][_proposal] == false, "You already emit your vote");
         
         votes[numberOfVotes].voters[msg.sender][_proposal] = true;
@@ -144,12 +154,17 @@ contract VoteSystem {
         numberOfVoters++;
         
         emit Vote(_proposal);
-        
-        return true;
     }
 
     function candidatesOf() external view returns (bool) {
         return candidatesCreated[msg.sender];
     }
-    
+
+    function votesPerCandidatesOf(uint _proposal) external view returns (uint) {
+        return votesPerProposal[_proposal];
+    }
+
+    function votesOf(address addr, uint _proposal) external view returns (bool){
+        return votes[numberOfVotes].voters[addr][_proposal];
+    }
 }
