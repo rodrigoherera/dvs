@@ -46,7 +46,7 @@ describe("VoteSystem contract", () => {
     });
 
     it("Should create a candidate", async () => {
-      const candidateID = await hardhatVoteSystem.connect(addr1).createCandidate(PROFESSION);
+      const candidateID = await hardhatVoteSystem.connect(addr1).createCandidate();
       const candidatesCreated = await hardhatVoteSystem.connect(addr1).candidatesOf();
 
       expect(candidateID.value).to.equal(0);
@@ -54,41 +54,41 @@ describe("VoteSystem contract", () => {
     });
 
     it("Shouldn't create a candidate, candidate duplicated", async () => {
-      await hardhatVoteSystem.connect(addr1).createCandidate(PROFESSION);
-      await expect(hardhatVoteSystem.connect(addr1).createCandidate(PROFESSION)).to.be.revertedWith("Candidate already exists");
+      await hardhatVoteSystem.connect(addr1).createCandidate();
+      await expect(hardhatVoteSystem.connect(addr1).createCandidate()).to.be.revertedWith("Candidate already exists");
     });
 
     it("Shouldn't create a candidate, state of vote different to Start", async () => {
       await hardhatVoteSystem.pauseVote();
-      await expect(hardhatVoteSystem.connect(addr1).createCandidate(PROFESSION)).to.be.revertedWith("Different state of vote");
+      await expect(hardhatVoteSystem.connect(addr1).createCandidate()).to.be.revertedWith("Different state of vote");
     });
 
     it("Shouldn't create a candidate, admin not allowed", async () => {
-      await expect(hardhatVoteSystem.connect(admin).createCandidate(PROFESSION)).to.be.revertedWith("Admin could not participate");
+      await expect(hardhatVoteSystem.connect(admin).createCandidate()).to.be.revertedWith("Admin could not participate");
     });
 
   });
 
   describe("Proposal", () => {
     beforeEach(async () => {
-      await hardhatVoteSystem.connect(addr1).createCandidate(PROFESSION);
+      await hardhatVoteSystem.connect(addr1).createCandidate();
     });
 
     it("Should create a proposal", async () => {
-      const proposalID = await hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL, [0]);
+      const proposalID = await hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL);
       
       expect(proposalID.value).to.equal(0);
       expect(await hardhatVoteSystem.numberOfProposals()).to.equal(1);
     });
 
     it("Shouldn't create a proposal, maximum of proposals exceeded", async () => {
-      await hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL, [0]);
-      await expect(hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL, [0])).to.be.revertedWith("Max proposal created");
+      await hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL);
+      await expect(hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL)).to.be.revertedWith("Max proposal created");
     });
 
     it("Shouldn't create a proposal, state of vote different to Start", async () => {
       await hardhatVoteSystem.pauseVote();
-      await expect(hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL, [0])).to.be.revertedWith("Different state of vote");
+      await expect(hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL)).to.be.revertedWith("Different state of vote");
     });
   });
 
@@ -96,8 +96,8 @@ describe("VoteSystem contract", () => {
     let proposalId;
 
     beforeEach(async () => {
-      let candidateId = await hardhatVoteSystem.connect(addr1).createCandidate(PROFESSION);
-      proposalId = await hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL, [candidateId.value]);
+      await hardhatVoteSystem.connect(addr1).createCandidate();
+      proposalId = await hardhatVoteSystem.createProposal(NAME_PROPOSAL, DESCRIPTION_PROPOSAL);
     });
 
     it("Should start vote", async () => {
