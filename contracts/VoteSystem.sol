@@ -12,7 +12,7 @@ contract VoteSystem {
     uint public initialVote;
     uint public endingVote;
     uint public maxProposals;
-    uint public targetBlock = 6646;
+    uint public targetBlock = 500;
     
     enum State {Started, Running, Ended, Paused, Canceled}
     State public voteState;
@@ -23,19 +23,15 @@ contract VoteSystem {
     }
 
     struct Proposal {
-        Candidate candidate;
+        address candidate;
         string name;
         string description;
     }
 
-    struct Candidate {
-        address candidateAddress;
-        string profession;
-    }
     
     mapping(uint => VoteP) internal votes;
     mapping(uint => Proposal) public proposals;
-    mapping(uint => Candidate) public candidates;
+    mapping(uint => address) public candidates;
     mapping(address => bool) internal candidatesCreated;
     mapping(uint => uint) public votesPerProposal;
     
@@ -50,8 +46,8 @@ contract VoteSystem {
     event ResumeVote();
     event EndVote();
     event StartVote(uint _nroOfVote);
-    event CreateProposal(string _name, string _description, uint[] _candidate);
-    event CreateCandidate(string _profession);
+    event CreateProposal(string _name, string _description);
+    event CreateCandidate();
     event Vote(uint _proposal);
     
     modifier onlyAdmin() {
@@ -111,38 +107,39 @@ contract VoteSystem {
         emit StartVote(_nroOfVote);
     }
     
-    function createProposal(string memory _name, string memory _description, uint[] memory _candidate) public returns (uint proposalID) {
+    function createProposal(string memory _name, string memory _description) public returns (uint proposalID) {
         require(numberOfProposals < maxProposals, "Max proposal created");
         require(voteState == State.Started, "Different state of vote");
-        
+
+        uint _candidateIndex;
+
         Proposal storage newProposal = proposals[numberOfProposals];
         proposalID = numberOfProposals++;
         
+        for (uint256 index = 0; index < numberOfCandidates; index++) {
+            if (candidates[index] == msg.sender) {
+                _candidateIndex = index;
+            }
+        }
+
         newProposal.name = _name;
         newProposal.description = _description;
         
-        /*for (uint i=0; i<_candidate.length; i++) {
-            newProposal.candidate.push(candidates[_candidate[i]]);
-        }*/
+        newProposal.candidate = candidates[_candidateIndex];
         
-        newProposal.candidate = candidates[0];
-        
-        emit CreateProposal(_name, _description, _candidate);
+        emit CreateProposal(_name, _description);
     }
     
-    function createCandidate(string memory _profession) public notAdmin returns (uint candidateID) {
+    function createCandidate() public notAdmin returns (uint candidateID) {
         require(voteState == State.Started, "Different state of vote");
         require(candidatesCreated[msg.sender] == false, "Candidate already exists");
         
-        Candidate storage newCandidate = candidates[numberOfCandidates];
         candidateID = numberOfCandidates++;
-        
-        newCandidate.profession = _profession;
-        newCandidate.candidateAddress = msg.sender;
+        candidates[candidateID] = msg.sender;
         
         candidatesCreated[msg.sender] = true;
         
-        emit CreateCandidate( _profession);
+        emit CreateCandidate();
     }
     
     function vote(uint _proposal) external voteEnded {
@@ -159,12 +156,16 @@ contract VoteSystem {
     function candidatesOf() external view returns (bool) {
         return candidatesCreated[msg.sender];
     }
-
+    
     function votesPerCandidatesOf(uint _proposal) external view returns (uint) {
         return votesPerProposal[_proposal];
     }
 
     function votesOf(address addr, uint _proposal) external view returns (bool){
         return votes[numberOfVotes].voters[addr][_proposal];
+    }
+    
+    function getBlock() external view returns (uint) {
+        return block.number;
     }
 }

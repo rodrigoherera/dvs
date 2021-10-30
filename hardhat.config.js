@@ -14,6 +14,13 @@ require("solidity-coverage");
 module.exports = {
   solidity: "0.8.4",
   networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      mining: {
+        auto: true,
+        interval: 5000
+      }
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
       accounts:
