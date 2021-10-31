@@ -65,6 +65,7 @@ contract VoteSystem {
         _;
     }
 
+    //TODO - Keep testing this, isn't working.
     modifier voteExpired() {
         require(endingVote < block.number, "Vote expired");
         _;

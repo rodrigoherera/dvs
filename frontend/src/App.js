@@ -14,7 +14,7 @@ import Proposals from "./components/Proposals";
 import Ranking from "./components/Ranking";
 import AddProposal from "./components/AddProposal";
 
-const HARDHAT_NETWORK_ID = "31337";
+const HARDHAT_NETWORK_ID = "3";
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 const App = () => {
@@ -38,6 +38,7 @@ const App = () => {
   const [showAddProposal, setShowAddProposal] = React.useState(false);
   const [showRanking, setShowRanking] = React.useState(false);
 
+  //TODO - Add balance
   
   const _connectWallet = async () => {
     const [address] = await window.ethereum.request({
@@ -71,7 +72,6 @@ const App = () => {
 
     setIsLoading(true);
 
-    let err;
 
     try {
       _dismissTransaction();
@@ -89,13 +89,7 @@ const App = () => {
       }
       console.error(error);
 
-      if (error.data.message !== undefined) {
-        err = error.data.message;
-      } else {
-        err = error.message;
-      }
-
-      setTransactionError(err);
+      setTransactionError(error.message);
     } finally {
       setIsLoading(false);
 
@@ -111,7 +105,6 @@ const App = () => {
 
     setIsLoading(true);
 
-    let err;
 
     try {
       _dismissTransaction();
@@ -129,13 +122,7 @@ const App = () => {
       }
       console.error(error);
 
-      if (error.data.message !== undefined) {
-        err = error.data.message;
-      } else {
-        err = error.message;
-      }
-
-      setTransactionError(err);
+      setTransactionError(error.message);
     } finally {
       setIsLoading(false);
       setShowAddProposal(false);
@@ -154,8 +141,6 @@ const App = () => {
 
     setIsLoading(true);
     
-    let err;
-    
     try {
       _dismissTransaction();
 
@@ -172,13 +157,7 @@ const App = () => {
       }
       console.error(error);
 
-      if (error.data.message !== undefined) {
-        err = error.data.message;
-      } else {
-        err = error.message;
-      }
-
-      setTransactionError(err);
+      setTransactionError(error.message);
     } finally {
       setIsLoading(false);
     }
